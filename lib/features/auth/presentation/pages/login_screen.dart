@@ -52,39 +52,58 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleSignIn() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
-    try {
-      final input = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      if (selectedRole == 'Student' && !input.contains('@')) {
-        await authProvider.signInWithStudentId(input, password);
-      } else {
-        await authProvider.signInWithEmail(input, password);
+  try {
+    final input = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (input.isEmpty || password.isEmpty) {
+      throw Exception('Please enter your email/ID and password.');
+    }
+
+    if (selectedRole == 'Student' && !input.contains('@')) {
+      await authProvider.signInWithStudentId(input, password);
+    } else {
+      await authProvider.signInWithEmail(input, password);
+    }
+
+    if (!mounted) return;
+
+    final user = authProvider.currentUser;
+
+    if (user == null) {
+      throw Exception('Unable to load user profile.');
+    }
+
+    final selectedRoleLower = selectedRole.toLowerCase();
+    final actualRoleLower = user.role.toLowerCase();
+
+    if (selectedRoleLower != actualRoleLower) {
+      await authProvider.signOut();
+
+      throw Exception(
+        'You selected $selectedRole portal, but this account belongs to ${user.role}. Please use the correct portal.',
+      );
+    }
+
+    _redirect(user.role);
+  } catch (e) {
+    if (mounted) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains('Exception: ')) {
+        errorMessage = errorMessage.split('Exception: ')[1];
       }
 
-      if (mounted) {
-        final user = authProvider.currentUser;
-        if (user != null) {
-          _redirect(user.role);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        String errorMessage = e.toString();
-        if (errorMessage.contains('Exception: ')) {
-          errorMessage = errorMessage.split('Exception: ')[1];
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
