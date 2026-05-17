@@ -1,0 +1,12 @@
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.5.0
+numpy<2
+
+Pillow>=10.1.0
+# TensorFlow optional - using image hashing fallback if not available
+# tensorflow>=2.15.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
